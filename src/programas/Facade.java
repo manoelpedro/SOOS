@@ -4,12 +4,16 @@ public class Facade {
 	
 	Controller controle;
 	
+	public Facade(){
+		controle = new Controller();
+	}
+	
 	/* 
 	 * iniciaSistema e fechaSistema serao usados para carregar/armazenar
 	 * os dados do sistema nos arquivos de dados. 
 	 */
 	public void iniciaSistema(){
-		controle = new Controller();
+		
 	}
 	
 	public void fechaSistema() throws Exception{
@@ -36,6 +40,14 @@ public class Facade {
 	
 	public String getInfoFuncionario(String matricula, String atributo) throws Exception{
 		return controle.getInfoFuncionario(matricula, atributo);
+	}
+	
+	public void excluiFuncionario(String matricula, String senha) throws Exception{
+		controle.excluiFuncionario(matricula, senha);
+	}
+	
+	public void atualizaInfoFuncionario(String matricula, String atributo, String novoValor){
+		controle.atualizaInfoFuncionario(matricula, atributo, novoValor);
 	}
 	
 }

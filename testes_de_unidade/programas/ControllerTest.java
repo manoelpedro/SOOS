@@ -112,6 +112,35 @@ public class ControllerTest {
 		System.out.println();
 		
 		System.out.println(controle.getInfoFuncionario("32016002", "Nome"));
+		
+		try{
+			System.out.println(controle.pesquisaFuncionario("12016001").getNome());			
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		System.out.println();
+		
+		try{
+			controle.logout();
+			System.out.println("fez logout");
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		
+		try{
+			controle.logout();
+			System.out.println("fez logout");
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		
+		try{
+			controle.login("1216001", "19671201");
+			System.out.println("fez login");
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		
 	}
 	
 }

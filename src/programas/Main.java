@@ -9,8 +9,7 @@ public class Main {
 		args = new String[] {
 	    	
 				"programas.Facade", 
-	    		"testes/usecase_1.txt"}; 
-	    	//	"testes/usecase_2.txt"},	
+	    		"testes/usecase_1.txt",	"testes/usecase_2.txt"};	
 	    	//	"testes/usecase_3.txt"},		
 	    	//	"testes/usecase_4.txt"};
 	   

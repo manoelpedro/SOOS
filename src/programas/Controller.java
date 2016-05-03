@@ -1,8 +1,15 @@
 package programas;
 
 import java.util.HashMap;
+
+import exceptions.EntradaException;
+import exceptions.SOOSException;
+import exceptions.SenhaException;
+import exceptions.FuncionarioException;
+import exceptions.LoginException;
+import exceptions.MatriculaException;
+
 import java.text.DecimalFormat;
-//import java.text.NumberFormat;
 import java.time.LocalDate;
 
 /**
@@ -17,11 +24,8 @@ public class Controller {
 	private FactoryFuncionario factoryFuncionario;
 	private LocalDate dataDeHoje;
 	private int qtd_cadastros_realizados;
-	//private DecimalFormat formatar;
 	private Funcionario funcionarioLogado;
 	private boolean sistemaLiberado;
-	//private boolean sistemaLiberado;
-	
 	
 	/**
 	 * Metodo Construtor da classe Controller
@@ -50,12 +54,15 @@ public class Controller {
 	 * 
 	 * @throws Exception
 	 */
-	public String liberaSistema(String chave, String nome, String dataNascimento) throws Exception {
+	public String liberaSistema(String chave, String nome, String dataNascimento) throws SOOSException {
 		
 		if(sistemaLiberado == true){
-			throw new Exception("Erro ao liberar o sistema. Sistema liberado anteriormente.");
+			throw new SOOSException("Erro ao liberar o sistema. Sistema liberado anteriormente.");
 		}
-		validaParametros(chave, nome, dataNascimento);
+		
+		verificaSeNomeTemErro(nome, "Erro ao liberar o sistema. ");
+		verificaSeDataTemErro(dataNascimento, "Erro ao liberar o sistema. ");
+		verificaChave(chave, "Erro ao liberar o sistema. ");
 			
 		Funcionario novoFuncionario = factoryFuncionario.criaFuncionario(nome, "Diretor Geral", dataNascimento);
 
@@ -92,15 +99,22 @@ public class Controller {
 	 * 
 	 * @throws Exception
 	 */
-	public void login(String matricula, String senha) throws Exception{
+	public void login(String matricula, String senha) throws SOOSException{
 		
 		if(funcionarioLogado != null){ //eh pq tem alguem logado
-			throw new Exception("Nao foi possivel realizar o login. Um funcionario ainda esta logado: " + funcionarioLogado.getNome() + ".");
+			throw new LoginException("Nao foi possivel realizar o login. Um funcionario ainda esta logado: " + funcionarioLogado.getNome() + ".");
 		}
-	
-		validaLogin(matricula, senha);
 		
-		//se chegou aqui entao a matricula e senha estao corretas
+		verificaSeMatriculaTemErro(matricula, "Erro no login de funcionario. ");
+		verificaSeSenhaTemErro(senha, "Erro no login de funcionario");
+		
+		if(!(funcionarios.containsKey(matricula))){ //se nao contem a matricula(chave) informada
+			throw new FuncionarioException("Nao foi possivel realizar o login. Funcionario nao cadastrado.");
+		}
+		if(!(funcionarios.get(matricula).getSenha().equals(senha))){ //se a senha for diferente da senha do usuario tentando logar.
+			throw new SenhaException("Nao foi possivel realizar o login. Senha incorreta.");
+		}
+		
 		Funcionario funcionarioAcessando = pesquisaFuncionario(matricula);
 		
 		funcionarioLogado = funcionarioAcessando;
@@ -114,7 +128,6 @@ public class Controller {
 		System.out.println("Matricula: "+funcionarioLogado.getMatricula());
 		System.out.println("Senha: "+funcionarioLogado.getSenha());
 		*/
-	
 	}
 	
 	/**
@@ -122,10 +135,10 @@ public class Controller {
 	 * 
 	 * @throws Exception
 	 */
-	public void logout() throws Exception{
+	public void logout() throws SOOSException{
 		
 		if(funcionarioLogado == null){
-			throw new Exception("Nao foi possivel realizar o logout. Nao ha um funcionario logado.");
+			throw new FuncionarioException("Nao foi possivel realizar o logout. Nao ha um funcionario logado.");
 		}else{
 			funcionarioLogado = null;
 		}
@@ -138,17 +151,31 @@ public class Controller {
 	 *			Matricula do funcionario.
 	 *
 	 * @return
+	 * @throws Exception 
 	 */
-	public Funcionario pesquisaFuncionario(String matricula) {
-	
-		Funcionario funcionario;	
+	public Funcionario pesquisaFuncionario(String matricula) throws SOOSException {
 		
-		if(funcionarios.containsKey(matricula)){
-			funcionario = funcionarios.get(matricula);
-			return funcionario;
+		verificaSeMatriculaTemErro(matricula, "Erro na consulta de funcionario. ");
+		
+		/*if(matricula == null || matricula.equals("")){
+			throw new Exception("Erro na consulta de funcionario. Matricula Invalida");
 		}
-		System.out.println("nao achou");
-		return null;
+		
+		//se conter letras
+		for(int i = 0; i < matricula.length(); i++){
+			char caractere = matricula.charAt(i);
+			if(Character.isLetter(caractere)){
+				throw new Exception("Erro na consulta de funcionario. A matricula nao segue o padrao.");
+			}
+		}*/
+		
+		if(!(funcionarios.containsKey(matricula))){ //se nao contem a matricula(chave) informada
+			throw new MatriculaException("Erro na consulta de funcionario. Funcionario nao cadastrado.");
+		}
+		
+		Funcionario funcionario = funcionarios.get(matricula);
+		
+		return funcionario;
 	}
 
 	/**
@@ -163,12 +190,15 @@ public class Controller {
 	 * 
 	 * @throws Exception
 	 */
-	public String cadastraFuncionario(String nome, String cargo, String dataNascimento) throws Exception {
+	public String cadastraFuncionario(String nome, String cargo, String dataNascimento) throws SOOSException {
 		
-		if(!(funcionarioLogado.getCargo().equals("Diretor Geral"))){
-			throw new Exception("Erro no cadastro de funcionario. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para cadastrar funcionarios.");
+		if(!(funcionarioLogado instanceof Diretor)){ //se nao for diretor geral
+			throw new FuncionarioException("Erro no cadastro de funcionario. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para cadastrar funcionarios.");
 		}
-		validaFuncionario(nome, cargo, dataNascimento);
+
+		verificaSeNomeTemErro(nome, "Erro no cadastro de funcionario. ");
+		verificaCargo(cargo, "Erro no cadastro de funcionario. ");
+		verificaSeDataTemErro(dataNascimento, "Erro no cadastro de funcionario. ");
 		
 		Funcionario novoFuncionario = factoryFuncionario.criaFuncionario(nome, cargo, dataNascimento);
 		
@@ -197,6 +227,64 @@ public class Controller {
 	}
 	
 	/**
+	 * Verifica se a senha informada eh valida.
+	 * 
+	 * @param senha
+	 * @param localDoErro
+	 * @throws Exception
+	 */
+	private void verificaSeSenhaTemErro(String senha, String localDoErro) throws SOOSException{
+		
+		if (senha == null || senha.equals("")) {
+			throw new EntradaException( localDoErro + "Digite uma senha");
+		}
+	}
+	
+	/**
+	 * Verifica se a matricula informada eh um valor valido.
+	 * 
+	 * @param matricula
+	 * @param localDoErro
+	 * @throws Exception
+	 */
+	private void verificaSeMatriculaTemErro(String matricula, String localDoErro) throws SOOSException{
+		
+		if(matricula == null || matricula.equals("")){
+			throw new EntradaException( localDoErro + "Matricula Invalida");
+		}
+		// se contem letras
+		for (int i = 0; i < matricula.length(); i++) {
+			char caractere = matricula.charAt(i);
+			if (Character.isLetter(caractere)) {
+				throw new MatriculaException( localDoErro + "A matricula nao segue o padrao.");
+			}
+		}
+	}
+	
+	public void excluiFuncionario(String matricula, String senha) throws SOOSException{
+		
+		if(!(funcionarioLogado instanceof Diretor)){ //se usuario nao for o Diretor Geral
+			throw new FuncionarioException("Erro ao excluir funcionario. O funcionario " + funcionarioLogado.getNome() + " nao tem permissao para excluir funcionarios.");
+		}
+		
+		verificaSeMatriculaTemErro(matricula, "Erro ao excluir funcionario. ");
+		verificaSeSenhaTemErro(senha, "Erro ao excluir funcionario. ");
+		
+		if(!(funcionarios.containsKey(matricula))){ //se nao existe a matricula(chave) informada
+			throw new MatriculaException("Erro ao excluir funcionario. Funcionario nao cadastrado.");
+		}
+		if(!(funcionarioLogado.getSenha().equals(senha))){ //se a senha do usuario logado for dirente da informada
+			throw new SenhaException("Erro ao excluir funcionario. Senha invalida.");
+		}
+		
+		funcionarios.remove(matricula);
+	}
+	
+	public void atualizaInfoFuncionario(String matricula, String atributo, String novoValor){
+		
+	}
+	
+	/**
 	 * Gera uma senha para um novo funcionario cadastrado no sistema.
 	 * Os 4 primeiros digitios sao o ano de nascimento do funcionario.
 	 * Os 4 ultimos digitos sao os 4 primeiros digitos da matricula.
@@ -219,32 +307,19 @@ public class Controller {
 	}
 	
 	/**
-	 * Verifica se sao validos os parametros recebidos no metodo libera sistema.
+	 * Verifica se a chave que libera o sistema eh valida.
 	 * 
 	 * @param chave
-	 *			Chave de desbloqueio do sistema.
-	 *
-	 * @param nome
-	 *			Nome do primeiro ususario do sistema.
-	 * 
-	 * @param dataNascimento
-	 *			Data de nascimento do primeiro ususario do sistema.
-	 * 
+	 * @param localDoErro
 	 * @throws Exception
 	 */
-	private void validaParametros(String chave, String nome, String dataNascimento) throws Exception{
+	private void verificaChave(String chave, String localDoErro) throws SOOSException{
 		
 		if(chave == null || chave.equals("")){
-			throw new Exception("Erro ao liberar o sistema. Insira uma chave.");
-		}
-		if(nome == null || nome.equals("")){
-			throw new Exception("Erro ao liberar o sistema. Insira um nome.");
-		}
-		if(dataNascimento == null || dataNascimento.equals("")){ //falta para entradas tipo 34/23/2009
-			throw new Exception("Erro ao liberar o sistema. Insira uma data valida.");
+			throw new EntradaException( localDoErro + "Insira uma chave.");
 		}
 		if (!(chave.equals(CHAVE))) {
-			throw new Exception("Erro ao liberar o sistema. Chave invalida.");
+			throw new EntradaException( localDoErro + "Chave invalida.");
 		}
 	}
 	
@@ -262,13 +337,18 @@ public class Controller {
 	 * 
 	 * @throws Exception
 	 */
-	public String getInfoFuncionario(String matricula, String atributo) throws Exception{
+	public String getInfoFuncionario(String matricula, String atributo) throws SOOSException{
 		
 		Funcionario funcionario = pesquisaFuncionario(matricula);
 		
 		if (funcionario == null){
-			throw new Exception("Funcionario nao cadastrado");
+			throw new FuncionarioException("Funcionario nao cadastrado");
 		}	
+		
+		if(atributo == null || atributo.equals("")){
+			throw new EntradaException("Atributo invalido");
+		}
+		
 		switch (atributo) {
 		case "Nome":
 			return funcionario.getNome();
@@ -278,71 +358,61 @@ public class Controller {
 		case "Cargo":
 			return funcionario.getCargo();
 		case "Senha":
-			throw new Exception("Erro na consulta de funcionario. A senha do funcionario eh protegida.");
+			throw new EntradaException("Erro na consulta de funcionario. A senha do funcionario eh protegida.");
 		default:
-			throw new Exception("Este atributo nao existe");
+			throw new EntradaException("Este atributo nao existe");
 		}		
+	}
+
+	
+	
+	
+	
+	/**
+	 * Verifica se o nome informado eh valido.
+	 * 
+	 * @param nome
+	 * @param localDoErro
+	 * @throws Exception
+	 */
+	private void verificaSeNomeTemErro(String nome, String localDoErro) throws SOOSException{
+		
+		if(nome == null || nome.equals("")){
+			throw new EntradaException( localDoErro + "Nome do funcionario nao pode ser vazio.");
+		}
 	}
 	
 	/**
-	 * Verifica se os parametros para logar sao validos, se a matricula existe e se a senha esta associada a ela.
+	 * Verifica se a data de nascimento informada eh valida.
 	 * 
-	 * @param matricula
-	 * 			Matricula do funcionario que deseja fazer login no sistema.			
-	 * 
-	 * @param senha
-	 * 			Senha do funcionario que deseja fazer login no sistema.
-	 * 
+	 * @param localDoErro
+	 * @param dataNascimento
 	 * @throws Exception
 	 */
-	private void validaLogin(String matricula, String senha) throws Exception {
+	private void verificaSeDataTemErro(String dataNascimento, String localDoErro) throws SOOSException{
 		
-		if(matricula == null || matricula.equals("")){
-			throw new Exception("Erro no login de funcionario. Matricula Invalida");
-		}
-		if(senha == null || senha.equals("")){
-			throw new Exception("Erro no login de funcionario. Digite uma senha");
-		}
-		if(!(funcionarios.containsKey(matricula))){ //se nao contem a matricula(chave) informada
-			throw new Exception("Nao foi possivel realizar o login. Funcionario nao cadastrado.");
-		}
-		if(!(funcionarios.get(matricula).getSenha().equals(senha))){ //se a senha for diferente da senha do usuario associado a matricula informada.
-			throw new Exception("Nao foi possivel realizar o login. Senha incorreta.");
+		if(dataNascimento == null || dataNascimento.equals("")){ //falta para entradas tipo 34/23/2009
+			throw new EntradaException( localDoErro + "Data invalida.");
 		}
 	}
-
+	
 	/**
-	 * Recebe atributos de um funcionario e verifica se sao validos de acordo com as regras
-	 * para o cadastro de um novo funcionario. 
-	 * Caso algum nao seja valido, sao lancadas excecoes.
+	 * Verifica se o cargo informado eh valido para o cadastro de um novo funcionario.
 	 * 
-	 * @param nome
-	 *			Nome do funcionario que sera cadastrado.
-	 *
-	 * @param dataNascimento
-	 *			Date de Nascimento do funcionario que sera cadastrado.
-	 *
 	 * @param cargo
-	 *			Cargo do funcionario que sera cadastrado.
-	 * 
+	 * @param localDoErro
 	 * @throws Exception
 	 */
-	private void validaFuncionario(String nome, String cargo, String dataNascimento) throws Exception {
+	private void verificaCargo(String cargo, String localDoErro) throws SOOSException {
 		
-		if(nome == null || nome.equals("")){
-			throw new Exception("Erro no cadastro de funcionario. Nome do funcionario nao pode ser vazio.");
-		}
-		if(dataNascimento == null || dataNascimento.equals("")){ // falta excecao para coisas tipo 87/00/2016
-			throw new Exception("Erro no cadastro de funcionario. Data invalida.");
-		}
 		if(cargo == null || cargo.equals("")){
-			throw new Exception("Erro no cadastro de funcionario. Nome do cargo nao pode ser vazio.");
+			throw new EntradaException( localDoErro + "Nome do cargo nao pode ser vazio.");
 		}
 		if(!(cargo.equals("Diretor Geral")) && !(cargo.equals("Medico")) && !(cargo.equals("Tecnico Administrativo"))){
-			throw new Exception("Erro no cadastro de funcionario. Cargo invalido.");
+			throw new EntradaException( localDoErro + "Cargo invalido.");
 		}
 		if(cargo.equals("Diretor Geral")){
-			throw new Exception("Erro no cadastro de funcionario. Nao eh possivel criar mais de um Diretor Geral.");
+			throw new EntradaException( localDoErro + "Nao eh possivel criar mais de um Diretor Geral.");
 		}
 	}
 	
