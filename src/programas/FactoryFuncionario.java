@@ -2,7 +2,6 @@ package programas;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
-//import java.time.format.DateTimeFormatter;
 
 public class FactoryFuncionario {
 	
@@ -10,27 +9,30 @@ public class FactoryFuncionario {
 		
 		LocalDate data = converteData(dataNascimento);
 		
-		if(cargo.equals("Diretor Geral")){
-			Funcionario novoFuncionario = new Diretor(nome, cargo, data);
+		if(cargo.equalsIgnoreCase("Diretor Geral")){
+			Funcionario novoFuncionario = new Diretor(nome, "Diretor Geral", data);
 			return novoFuncionario;
 		}	
-		else if(cargo.equals("Medico")){
-			Funcionario novoFuncionario = new Medico(nome, cargo, data);
+		else if(cargo.equalsIgnoreCase("Medico")){
+			Funcionario novoFuncionario = new Medico(nome, "Medico", data);
 			return novoFuncionario;
 		}	
-		else if(cargo.equals("Tecnico Administrativo")){
-			Funcionario novoFuncionario = new TecAdministrativo(nome, cargo, data);
+		else if(cargo.equalsIgnoreCase("Tecnico Administrativo")){
+			Funcionario novoFuncionario = new TecAdministrativo(nome, "Tecnico Administrativo", data);
 			return novoFuncionario;
 		}	
 		return null;
 	}
 	
 	/**
-	 * Converte a data de nascimento de String para LocalDate
+	 * Converte a data de nascimento de String para LocalDate.
 	 * 
 	 * @param dataNascimento
+	 * 			Data de nascimento(dd/MM/yyyy) que sera convertida.
 	 * @return
+	 *			Retorna a data de nascimento convertida para LocalDate no formato (yyyy-MM-dd)
 	 */
+	
 	private LocalDate converteData(String dataNascimento){
 		try{
 			String[] array = dataNascimento.split("/");

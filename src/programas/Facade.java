@@ -9,8 +9,7 @@ public class Facade {
 	}
 	
 	/* 
-	 * iniciaSistema e fechaSistema serao usados para carregar/armazenar
-	 * os dados do sistema nos arquivos de dados. 
+	 * iniciaSistema e fechaSistema serao usados para carregar/armazenar os dados do sistema nos arquivos de dados. 
 	 */
 	public void iniciaSistema(){
 		
@@ -46,8 +45,16 @@ public class Facade {
 		controle.excluiFuncionario(matricula, senha);
 	}
 	
-	public void atualizaInfoFuncionario(String matricula, String atributo, String novoValor){
+	public void atualizaInfoFuncionario(String matricula, String atributo, String novoValor) throws Exception{
 		controle.atualizaInfoFuncionario(matricula, atributo, novoValor);
+	}
+	
+	public void atualizaInfoFuncionario(String atributo, String novoValor) throws Exception{
+		controle.atualizaInfoFuncionario(atributo, novoValor);
+	}
+	
+	public void atualizaSenha(String antigaSenha, String novaSenha) throws Exception{
+		controle.atualizaSenha(antigaSenha, novaSenha);
 	}
 	
 }
