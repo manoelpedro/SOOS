@@ -1,4 +1,4 @@
-package programas;
+package hospital;
 
 import java.time.LocalDate;
 

@@ -1,6 +1,7 @@
-package programas;
+package funcionario;
 
 import java.time.LocalDate;
+
 
 public class Medico extends Funcionario{
 

@@ -1,4 +1,6 @@
-package programas;
+package funcionario;
+
+import hospital.Pessoa;
 
 import java.time.LocalDate;
 

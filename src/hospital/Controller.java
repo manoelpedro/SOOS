@@ -1,17 +1,23 @@
-package programas;
+package hospital;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 
-import exceptions.EntradaException;
-import exceptions.SOOSException;
-import exceptions.SenhaException;
-import exceptions.FuncionarioException;
-import exceptions.LoginException;
-import exceptions.MatriculaException;
+import exceptions.*;
+import farmacia.*;
+import funcionario.*;
+import paciente.*;
 
 import java.text.DecimalFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.Period;
+
+import orgao.FactoryOrgaos;
+import orgao.Orgao;
+
 
 /**
  * Classe que gerencia a execucao do sistema.
@@ -19,20 +25,39 @@ import java.time.LocalDate;
 public class Controller {
 
 	private HashMap<String, Funcionario> funcionarios;
-	private final String CHAVE;
+	private ArrayList<Paciente> pacientes;
+	private ArrayList<Prontuario> prontuarios;
+	public ArrayList<Orgao> orgaos; //LEMBRAAAR QUE TA PUBLIC
+	
 	private FactoryFuncionario factoryFuncionario;
-	private LocalDate dataDeHoje;
-	private int qtd_cadastros_realizados;
+	private FactoryPaciente factoryPaciente;
+	private FactoryOrgaos factoryOrgao;
+
 	private Funcionario funcionarioLogado;
+	private Farmacia farmacia; 
+
+	private final String CHAVE;
+	private int qtd_funcionarios_ja_cadastrados;
+	private int qtd_pacientes_jah_cadastrados;
 	private boolean sistemaLiberado;
+	private LocalDate dataDeHoje;
 
 	/**
 	 * Metodo Construtor da classe Controller
 	 */
 	public Controller() {
 		funcionarios = new HashMap<String, Funcionario>();
-		CHAVE = "c041ebf8";
+		pacientes = new ArrayList<Paciente>();
+		prontuarios = new ArrayList<Prontuario>();
+		orgaos = new ArrayList<Orgao>();
+		
 		factoryFuncionario = new FactoryFuncionario();
+		factoryPaciente = new FactoryPaciente();
+		factoryOrgao = new FactoryOrgaos();
+		
+		farmacia = new Farmacia();
+
+		CHAVE = "c041ebf8";
 		sistemaLiberado = false;
 	}
 
@@ -256,7 +281,7 @@ public class Controller {
 		
 		Funcionario funcionario = pesquisaFuncionario(matricula);
 		
-		switch (atributo.toLowerCase()) {
+		switch (atributo.trim().toLowerCase()) {
 		case "matricula":
 			throw new EntradaException("Erro ao atualizar funcionario. Matricula nao pode ser alterada.");	
 		case "nome":
@@ -420,7 +445,7 @@ public class Controller {
 	 * @throws SOOSException
 	 */
 	private void verificaSeNomeTemErro(String nome, String localDoErro) throws SOOSException {
-		if (nome == null || nome.equals("")) {
+		if (nome == null || nome.trim().equalsIgnoreCase("")) {
 			throw new EntradaException(localDoErro + "Nome do funcionario nao pode ser vazio.");
 		}
 	}
@@ -486,10 +511,10 @@ public class Controller {
 		dataDeHoje = LocalDate.now(); //dia, mes e ano atual
 		int anoAtual = dataDeHoje.getYear(); //apenas o ano
 
-		qtd_cadastros_realizados += 1;
+		qtd_funcionarios_ja_cadastrados += 1;
 
 		DecimalFormat formatar = new DecimalFormat("000");
-		String cadastros_realizados_3digitos = formatar.format(qtd_cadastros_realizados);
+		String cadastros_realizados_3digitos = formatar.format(qtd_funcionarios_ja_cadastrados);
 
 		String matricula = id + anoAtual + cadastros_realizados_3digitos;
 
@@ -505,5 +530,355 @@ public class Controller {
 	public Funcionario getFuncionarioLogado() {
 		return funcionarioLogado;
 	}
+	
+	/**
+	 * Cadastra paciente
+	 * 
+	 * @param nome
+	 * @param dataNascimento
+	 * @param peso
+	 * @param sexo
+	 * @param genero
+	 * @param tipoSanguineo
+	 * @throws Exception
+	 */
+	public int cadastraPaciente(String nome, String dataNascimento, double peso, String sexo, String genero, String tipoSanguineo) throws Exception{
+		
+		if (!(funcionarioLogado instanceof TecAdministrativo)) { // se nao for Tecnico Administrativo
+			throw new Exception("Nao foi possivel cadastrar o paciente. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para cadastrar pacientes.");
+		}
+		
+		//validacao dos demais parametros de entrada estao sendo feitos dentro da Factory de Paciente
+		//verificaSeDataTemErro(dataNascimento, "Nao foi possivel cadastrar o paciente. ");
+		
+		Paciente novoPaciente = factoryPaciente.criaPaciente(nome, dataNascimento, peso, sexo, genero, tipoSanguineo);
+		
+		for (Paciente paciente : pacientes) {
+			if (paciente.equals(novoPaciente)){
+				throw new Exception("Nao foi possivel cadastrar o paciente. Paciente ja cadastrado.");
+			}
+		}
+		novoPaciente.setId(qtd_pacientes_jah_cadastrados += 1);
+		
+		Prontuario prontuario = new Prontuario();
+		prontuario.setPaciente(novoPaciente);
+		
+		prontuarios.add(prontuario);
+		Collections.sort(prontuarios);
+		
+		pacientes.add(novoPaciente);
+		
+		return novoPaciente.getId();
+	}
+	
+	/**
+	 * Retorna informacoes do paciente
+	 * 
+	 * @param id
+	 * @param atributo
+	 * @return
+	 * @throws Exception
+	 */
+	public String getInfoPaciente(int id, String atributo) throws Exception{
+		
+		Paciente paciente = pesquisaPaciente(id);
+		
+		switch(atributo.toLowerCase()){
+		case "nome":
+			return paciente.getNome();
+		case "data":
+			return paciente.getDataNascimento().toString();
+		case "sexo":
+			return paciente.getSexoBiologico();
+		case "genero":
+			return paciente.getGenero();
+		case "tiposanguineo":
+			return paciente.getTipoSanguineo();
+		case "peso":
+			return String.valueOf(paciente.getPeso());
+		case "idade":
+			paciente.setIdade(Integer.parseInt(calculaIdade(paciente)));
+			return String.valueOf(paciente.getIdade());
+		default:
+			throw new Exception("Atributo invalido");
+		}
+	}
+	
+	/**
+	 * Calcula a idade com base na data de nascimento e data atual.
+	 * 
+	 * @param paciente
+	 * @return
+	 */
+	private String calculaIdade(Paciente paciente){
+		LocalDate nasc = paciente.getDataNascimento();
+		LocalDate hoje = LocalDate.now();
+		Period idade = Period.between(nasc, hoje); //periodo entre datas
+		
+		String anos = String.valueOf(idade.getYears());
+		return anos;
+	}
+	
+	/**
+	 * Pesquisa paciente
+	 * 
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */
+	public Paciente pesquisaPaciente(int id) throws Exception{
+		
+		for (Paciente paciente : pacientes) {
+			if(paciente.getId() == id){
+				return paciente;
+			}
+		}
+		throw new Exception("Erro na pesquisa. Paciente nao cadastrado.");
+	}
+	
+	public int getProntuario(int posicao) throws Exception{
+		
+		if(posicao < 0){
+			throw new Exception("Erro ao consultar prontuario. Indice do prontuario nao pode ser negativo.");
+		}else if(posicao > qtd_funcionarios_ja_cadastrados){
+			throw new Exception("Erro ao consultar prontuario. Nao ha prontuarios suficientes (max = "+prontuarios.size()+").");
+		}
+		
+		Prontuario prontuario = prontuarios.get(posicao);
+		int id = prontuario.getPaciente().getId();
+		
+		return id;
+	}
+	
+	/**
+	 * Retorna a farmacia associado ao hospital.
+	 * 
+	 * @return
+	 */
+	public Farmacia getFarmacia() {
+		return farmacia;
+	}
+	
+	/////////////////////////////////////// FARMACIA //////////////////////////////////////////////////
+	
+	public String cadastraMedicamento(String nome, String tipo, double preco, int quantidade, String categorias) throws Exception {
+		if(!(funcionarioLogado instanceof TecAdministrativo)){
+			throw new Exception("Erro no cadastro de medicamento. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para cadastrar medicamentos.");
+		}
+		return farmacia.cadastraMedicamento(nome, tipo, preco, quantidade, categorias);
+	}
+	
+	public String getInfoMedicamento(String atributo, String nome) throws SOOSException{
+		return farmacia.getInfoMedicamento(atributo, nome);
+	}
+	
+	public String atualizaMedicamento(String nome, String atributo, String novoValor) throws SOOSException{
+		return farmacia.atualizaMedicamento(nome, atributo, novoValor);
+	}	
 
+	public String consultaMedCategoria(String categoria) throws Exception{
+		return farmacia.consultaMedCategoria(categoria);
+		
+	}
+
+	public String consultaMedNome(String nome)throws SOOSException{
+		return farmacia.consultaMedNome(nome);
+	}
+	
+
+	public String getEstoqueFarmacia(String ordenacao) throws SOOSException{
+		return farmacia.getEstoqueFarmacia(ordenacao);
+	}
+	
+	/////////////////////////////////////////ORGAOS//////////////////////////////////////////////
+	
+	public void cadastraOrgao(String nome, String tipoSanguineo) throws Exception{
+		
+		Orgao novoOrgao = factoryOrgao.recebeNovoOrgao(nome, tipoSanguineo);
+		
+		orgaos.add(novoOrgao);
+	}
+	
+	/**
+	 * Busca um orgao recebendo um tipo sanguineo e retorna o nome dos orgao encontrados.
+	 * 
+	 * @param tipoSanguineo
+	 * @return
+	 * @throws Exception
+	 */
+	public String buscaOrgPorSangue(String tipoSanguineo) throws Exception{
+		
+		if(tipoSanguineo == null || tipoSanguineo.trim().equals("") || (!(tipoSanguineo.equalsIgnoreCase("A+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("A-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("B+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("B-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("AB+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("AB-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("O+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("O-")))){
+			
+			throw new Exception("O banco de orgaos apresentou um erro. Tipo sanguineo invalido.");
+		}
+		
+		String retorno = "";
+		
+		LinkedHashSet<String> nomesOrgaos = new LinkedHashSet<String>();
+			
+		for (Orgao orgao : orgaos) { //para cada orgao
+			if(orgao.getTipoSanguineo().equalsIgnoreCase(tipoSanguineo)){
+				nomesOrgaos.add(orgao.getNome());
+			}
+		}
+		
+		if(nomesOrgaos.isEmpty()){
+			throw new Exception("O banco de orgaos apresentou um erro. Nao ha orgaos cadastrados para esse tipo sanguineo.");
+		}
+
+		for (String nome : nomesOrgaos) {
+			retorno = retorno + nome + ",";	
+		}
+		return retorno.substring(0, retorno.length()-1);
+	}
+	
+	/**
+	 * Busca um orgao recebendo seu nome e retorna o tipo sanguineo.
+	 * 
+	 * @param tipoSanguineo
+	 * @return
+	 * @throws Exception
+	 */
+	public String buscaOrgPorNome(String nome) throws Exception{
+		
+		String retorno = "";
+		
+		for (Orgao orgao : orgaos) {
+			if(orgao.getNome().equalsIgnoreCase(nome)){
+				retorno = retorno + orgao.getTipoSanguineo() + ",";
+			}
+		}
+		//se nao encontrar o orgao especificado como parametro
+		if(retorno == ""){
+			throw new Exception("O banco de orgaos apresentou um erro. Orgao nao cadastrado."); 
+		}
+		
+		return retorno.substring(0,retorno.length()-1);
+	}
+	
+	/**
+	 * Busca orgao pelo nome e tipo sanguineo, retornando se exite ou nao.
+	 * 
+	 * @param nome
+	 * @param tipoSanguineo
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean buscaOrgao(String nome, String tipoSanguineo) throws Exception{
+		
+		if(tipoSanguineo == null || tipoSanguineo.trim().equals("") || (!(tipoSanguineo.equalsIgnoreCase("A+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("A-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("B+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("B-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("AB+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("AB-"))
+				&& !(tipoSanguineo.equalsIgnoreCase("O+"))
+				&& !(tipoSanguineo.equalsIgnoreCase("O-")))){
+			
+			throw new Exception("O banco de orgaos apresentou um erro. Tipo sanguineo invalido.");
+		}
+		
+		for (Orgao orgao : orgaos) {
+			if(orgao.getNome().equalsIgnoreCase(nome) && orgao.getTipoSanguineo().equalsIgnoreCase(tipoSanguineo)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Retira um orgao do banco de orgaos.
+	 * 
+	 * @param nome
+	 * @param tipoSanguineo
+	 * @throws Exception
+	 */
+	public void retiraOrgao(String nome, String tipoSanguineo) throws Exception{
+		
+		if(tipoSanguineo == null || tipoSanguineo.trim().equals("") || (!(tipoSanguineo.equalsIgnoreCase("A+"))
+			&& !(tipoSanguineo.equalsIgnoreCase("A-"))
+			&& !(tipoSanguineo.equalsIgnoreCase("B+"))
+			&& !(tipoSanguineo.equalsIgnoreCase("B-"))
+			&& !(tipoSanguineo.equalsIgnoreCase("AB+"))
+			&& !(tipoSanguineo.equalsIgnoreCase("AB-"))
+			&& !(tipoSanguineo.equalsIgnoreCase("O+"))
+			&& !(tipoSanguineo.equalsIgnoreCase("O-"))))
+			
+		throw new Exception("Erro na retirada de orgaos. Tipo sanguineo invalido.");
+		
+		Orgao orgaoEncontrado = null;
+		
+		for (Orgao orgao : orgaos) {
+			if(orgao.getNome().equalsIgnoreCase(nome) && orgao.getTipoSanguineo().equalsIgnoreCase(tipoSanguineo)){
+				orgaoEncontrado = orgao;
+			}
+		}
+		if(orgaoEncontrado == null){
+			throw new Exception("Erro na retirada de orgaos. Orgao nao cadastrado.");
+		}else{
+			orgaos.remove(orgaoEncontrado);
+		}
+	}
+	
+	/**
+	 * Retorna a quantidade de um orgao especifico.
+	 * 
+	 * @param nome
+	 * @return
+	 * @throws Exception
+	 */
+	public int qtdOrgaos(String nome) throws Exception{
+		
+		int qtd = 0;
+		
+		for (Orgao orgao : orgaos) { //para cada orgao
+			if(orgao.getNome().equalsIgnoreCase(nome)){
+				qtd += 1;
+			}
+		}
+		if(qtd == 0){
+			throw new Exception("O banco de orgaos apresentou um erro. Orgao nao cadastrado.");
+		}
+		return qtd;
+	}
+	
+	/**
+	 * Retona quantidade total de orgaos disponiveis no banco de orgaos.
+	 * 
+	 * @return
+	 */
+	public int totalOrgaosDisponiveis(){
+		return orgaos.size();
+	}
+	
+	//VVVVVVVVVVVVV passo 6 VVVVVVVVVVVVVVVV
+	
+	/**
+	 * Retorna o ID de um paciente se este estiver cadastrado no sistema.
+	 * 
+	 * @param nome
+	 * @return
+	 * @throws Exception
+	 */
+	public int getPacienteID(String nome) throws Exception{
+		
+		for (Paciente p : pacientes) {
+			if(p.getNome().equalsIgnoreCase(nome)){
+				return p.getId();
+			}
+		}
+		throw new Exception("Paciente nao cadastrado.");
+	}
+	
+	public void realizaProcedimento(String nome, String id, String nomesMedicamentos){
+		
+	}
 }
