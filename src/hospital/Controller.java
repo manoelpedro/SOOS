@@ -27,7 +27,7 @@ public class Controller {
 	private HashMap<String, Funcionario> funcionarios;
 	private ArrayList<Paciente> pacientes;
 	private ArrayList<Prontuario> prontuarios;
-	public ArrayList<Orgao> orgaos; //LEMBRAAAR QUE TA PUBLIC
+	private ArrayList<Orgao> orgaos;
 	
 	private FactoryFuncionario factoryFuncionario;
 	private FactoryPaciente factoryPaciente;

@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 public class Prontuario implements Comparable<Prontuario>{
 	
-	Paciente paciente;
-	ArrayList<String> procedimentos;
+	private Paciente paciente;
+	private ArrayList<String> procedimentos;
 	
 	public Prontuario(){
 		procedimentos = new ArrayList<String>();
