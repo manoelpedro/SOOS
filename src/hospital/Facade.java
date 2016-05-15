@@ -133,4 +133,16 @@ public class Facade {
 	public int getPacienteID(String nome) throws Exception{
 		return controle.getPacienteID(nome);
 	}
+	
+	public void realizaProcedimento(String procedimento, String IDNomePaciente, String nomesMedicamentos) throws Exception{
+		controle.realizaProcedimento(procedimento, IDNomePaciente, nomesMedicamentos);
+	}
+	
+	public void realizaProcedimento(String procedimento, String IDNomePaciente, String orgao, String nomesMedicamentos) throws Exception{
+		controle.realizaProcedimento(procedimento, IDNomePaciente, orgao, nomesMedicamentos);
+	}
+	
+	public int getTotalProcedimento(String id){
+		return controle.getTotalProcedimento(id);
+	}
 }

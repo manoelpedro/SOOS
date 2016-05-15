@@ -9,5 +9,5 @@ public class Diretor extends Funcionario {
 		super(nome, cargo, dataNascimento);
 		this.setId("1");
 	}
-
+	
 }

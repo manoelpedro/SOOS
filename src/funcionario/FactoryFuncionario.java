@@ -3,16 +3,26 @@ package funcionario;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 
-
 public class FactoryFuncionario {
 	
-	public Funcionario criaFuncionario(String nome, String cargo, String dataNascimento) {
+	private boolean temDiretor;
+	
+	public FactoryFuncionario() {
+		temDiretor = false;
+	}
+	
+	public Funcionario criaFuncionario(String nome, String cargo, String dataNascimento) throws Exception {
 		
 		LocalDate data = converteData(dataNascimento);
 		
 		if(cargo.equalsIgnoreCase("Diretor Geral")){
-			Funcionario novoFuncionario = new Diretor(nome, "Diretor Geral", data);
-			return novoFuncionario;
+			if(temDiretor == false){
+				Funcionario novoFuncionario = new Diretor(nome, "Diretor Geral", data);
+				temDiretor = true;
+				return novoFuncionario;
+			}else{
+				throw new Exception("Nao pode existir mais de um Diretor Geral.");
+			}
 		}	
 		else if(cargo.equalsIgnoreCase("Medico")){
 			Funcionario novoFuncionario = new Medico(nome, "Medico", data);
@@ -33,7 +43,6 @@ public class FactoryFuncionario {
 	 * @return
 	 *			Retorna a data de nascimento convertida para LocalDate no formato (yyyy-MM-dd)
 	 */
-	
 	private LocalDate converteData(String dataNascimento){
 		try{
 			String[] array = dataNascimento.split("/");
@@ -44,5 +53,4 @@ public class FactoryFuncionario {
 			throw new DateTimeException("Erro ao liberar o sistema. Insira uma data valida.");
 		}
 	}
-
 }

@@ -1,17 +1,8 @@
 package farmacia;
 
-import hospital.Controller;
-import funcionario.TecAdministrativo;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
 
-import com.sun.xml.internal.ws.util.StringUtils;
-
-import exceptions.CategoriaException;
 import exceptions.EntradaException;
 import exceptions.MedicamentoException;
 import exceptions.NomeException;
@@ -269,7 +260,7 @@ public class Farmacia {
 	 * @return
 	 * @throws SOOSException
 	 */
-	private Medicamento pesquisaMedicamento(String nome)throws SOOSException{
+	public Medicamento pesquisaMedicamento(String nome)throws SOOSException{
 		for (Medicamento medicamento : medicamentos) {
 			if(nome.equalsIgnoreCase(medicamento.getNome())){
 				return medicamento;

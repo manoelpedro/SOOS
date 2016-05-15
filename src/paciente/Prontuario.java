@@ -32,6 +32,8 @@ public class Prontuario implements Comparable<Prontuario>{
 		return paciente.getNome().compareTo(p.getPaciente().getNome());
 	}
 	
-	
+	public int getTotalProcedimento(){
+		return this.procedimentos.size();
+	}
 	
 }
