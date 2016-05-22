@@ -2,7 +2,7 @@ package cartao;
 
 public class CartaoFidelidade {
 	
-	private double pontosFidelidade;
+	private int pontosFidelidade;
 	private Tipo tipo;
 	
 	public CartaoFidelidade(){
@@ -10,7 +10,7 @@ public class CartaoFidelidade {
 		this.tipo = new Padrao();
 	}
 	
-	public void verificaTipo(double pontos, Tipo tipo){
+	public void verificaTipo(int pontos, Tipo tipo){
 		if (pontos > 350 ){
 			setTipo(new Vip());
 		}
@@ -19,7 +19,7 @@ public class CartaoFidelidade {
 			}
 	}
 
-	public double getPontosFidelidade() {
+	public int getPontosFidelidade() {
 		return pontosFidelidade;
 	}
 

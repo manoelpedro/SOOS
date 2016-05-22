@@ -1,7 +1,5 @@
 package farmacia;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 public class Medicamento implements Comparable<Medicamento>{
@@ -73,7 +71,4 @@ public class Medicamento implements Comparable<Medicamento>{
 	
 	}
 
-	
-	
-	
 }

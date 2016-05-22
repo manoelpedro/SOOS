@@ -1,8 +1,5 @@
 package hospital;
 
-import paciente.Paciente;
-import farmacia.Farmacia;
-
 public class Facade {
 	
 	Controller controle;
@@ -71,9 +68,7 @@ public class Facade {
 	public int getProntuario(int posicao) throws Exception{
 		return controle.getProntuario(posicao);
 	}
-	
-	//          vvvvvvvvv farmacia vvvvvvvvvv
-	
+	//farmc
 	public String cadastraMedicamento(String nome, String tipo, double preco,int quantidade, String categorias) throws Exception{
 		return controle.cadastraMedicamento(nome, tipo, preco, quantidade, categorias);
 	}
@@ -98,9 +93,7 @@ public class Facade {
 	public String getEstoqueFarmacia(String tipo_ordenacao) throws Exception{
 		return controle.getEstoqueFarmacia(tipo_ordenacao);
 	}
-	
-	//      vvvvvvvvvvvvvv passo 5 vvvvvvvvvvvvvvvvv
-	
+	//5
 	public void cadastraOrgao(String nome, String tipoSanguineo) throws Exception{
 		controle.cadastraOrgao(nome, tipoSanguineo);
 	}
@@ -128,8 +121,7 @@ public class Facade {
 	public int totalOrgaosDisponiveis(){
 		return controle.totalOrgaosDisponiveis();
 	}
-	/////////////////passo 6//////////////////
-	
+	//6
 	public int getPacienteID(String nome) throws Exception{
 		return controle.getPacienteID(nome);
 	}
@@ -144,5 +136,13 @@ public class Facade {
 	
 	public int getTotalProcedimento(String id){
 		return controle.getTotalProcedimento(id);
+	}
+	//7
+	public int getPontosFidelidade(String id) throws Exception{
+		return controle.getPontosFidelidade(id);
+	}
+	
+	public double getGastosPaciente(String id) throws Exception{
+		return controle.getGastosPaciente(id);
 	}
 }

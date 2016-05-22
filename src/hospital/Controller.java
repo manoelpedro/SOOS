@@ -916,6 +916,27 @@ public class Controller {
 	}
 	
 	/**
+	 * Calcula os gastos com medicamentos utilizados em um procedimento;
+	 * 
+	 * @param nomesMedicamentos
+	 * @return
+	 * @throws Exception
+	 */
+	private double gastoComMedicamentos(String nomesMedicamentos) throws Exception{
+		
+		double gasto = 0;
+		String[] medicamentos = nomesMedicamentos.split(",");
+		for (String nome : medicamentos) {
+			Medicamento medicamento = farmacia.pesquisaMedicamento(nome);
+			if(medicamento == null){
+				throw new Exception("Erro na realizacao de procedimentos. Medicamento nao cadastrado.");
+			}
+			gasto += medicamento.getPreco();
+		}
+		return gasto;
+	}
+	
+	/**
 	 * Realiza procedimento.
 	 * 
 	 * @param procedimento
@@ -926,25 +947,23 @@ public class Controller {
 	 * 			Nomes dos medicamentos necessarios para o procedimento.
 	 * @throws Exception
 	 */
-	public void realizaProcedimento(String procedimento, String IDNomePaciente, String nomesMedicamentos) throws Exception{
+	public void realizaProcedimento(String procedimento, String idPaciente, String nomesMedicamentos) throws Exception{
 		
-		if(IDNomePaciente == null || IDNomePaciente.trim().equals("")){
-			throw new Exception("Erro na realizacao de procedimentos. Nome do paciente nao pode ser vazio.");
+		if (!(funcionarioLogado instanceof Medico)) { 
+			throw new Exception("Erro na realizacao de procedimentos. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para realizar procedimentos.");
+		}
+		
+		if(idPaciente == null || idPaciente.trim().equals("")){
+			throw new Exception("Erro na realizacao de procedimentos. ID do paciente nao pode ser vazio.");
 		}
 		if(nomesMedicamentos == null || nomesMedicamentos.trim().equals("")){
 			throw new Exception("Erro na realizacao de procedimentos. Nome do medicamento nao pode ser vazio.");
 		}
-		String[] medicamentosProcedimento = nomesMedicamentos.split(",");
-		for (String nome : medicamentosProcedimento) {
-			Medicamento m = farmacia.pesquisaMedicamento(nome);
-			if(m == null){
-				throw new Exception("Erro na realizacao de procedimentos. Medicamento nao cadastrado.");
-			}
-			//aq vai acumular preco medicamento
-		}
 		
-		Paciente p = pesquisaPaciente(Integer.parseInt(IDNomePaciente));
-		Prontuario prontuario = pesquisaProntuario(IDNomePaciente);
+		double gasto = gastoComMedicamentos(nomesMedicamentos);
+		
+		Paciente p = pesquisaPaciente(Integer.parseInt(idPaciente));
+		Prontuario prontuario = pesquisaProntuario(idPaciente);
 		
 		switch(procedimento.trim().toLowerCase()){
 		case "redesignacao sexual":
@@ -953,18 +972,26 @@ public class Controller {
 			}
 			p.setGenero("masculino");
 			prontuario.getProcedimentos().add(procedimento);
-			//preco da redesignacao
+			gasto += 9300;
+			p.setTotalGasto(gasto);
 			break;
+		
 		case "cirurgia bariatrica":
 			double novoPeso = p.getPeso() - (0.10 * p.getPeso());
 			p.setPeso(novoPeso);
 			prontuario.getProcedimentos().add(procedimento);
-			//preco da cirurgia
+			gasto += 7600;
+			p.setTotalGasto((int)gasto);
 			break;
+		
 		case "consulta clinica":
 			prontuario.getProcedimentos().add(procedimento);
-			//preco consulta
+			gasto += 350;
+			p.setTotalGasto(gasto);
 			break;
+		
+		default:
+			throw new Exception("Erro na realizacao de procedimentos. Procedimento invalido.");
 		}
 		
 		//atualizar preco total(medicamento + procedimento)
@@ -985,31 +1012,47 @@ public class Controller {
 	 * 			Medicamentos necessarios para o procedimento.
 	 * @throws Exception
 	 */
-	public void realizaProcedimento(String procedimento, String IDNomePaciente, String orgao, String nomesMedicamentos) throws Exception{
+	public void realizaProcedimento(String procedimento, String idPaciente, String orgao, String nomesMedicamentos) throws Exception{
 		
-		if(!(procedimento.replace(" ", "").equalsIgnoreCase(Procedimentos.TRANSPLANTEDEORGAOS.name()))){
+		if (!(funcionarioLogado instanceof Medico)) { 
+			throw new Exception("Erro na realizacao de procedimentos. O funcionario "+funcionarioLogado.getNome()+" nao tem permissao para realizar procedimentos.");
+		}
+		
+		if(!(procedimento.trim().equalsIgnoreCase("Transplante de orgaos"))){
 			throw new Exception("Erro na realizacao de procedimentos. Procedimento invalido.");
 		}
 		if(orgao == null || orgao.trim().equals("")){
 			throw new Exception("Erro na realizacao de procedimentos. Nome do orgao nao pode ser vazio.");
 		}
-		boolean achouOrgao = false;
-		for (Orgao o : orgaos) {
-			if(orgao.trim().equalsIgnoreCase(o.getNome()) && getInfoPaciente(Integer.parseInt(IDNomePaciente), "tiposanguineo").equalsIgnoreCase(o.getTipoSanguineo())){
-				achouOrgao = true;
-			}
-		}
-		if(achouOrgao == false){
-			throw new Exception("Erro na realizacao de procedimentos. Banco nao possui o orgao especificado.");
-		}
 		
-		Paciente p = pesquisaPaciente(Integer.parseInt(IDNomePaciente));
-		Prontuario prontuario = pesquisaProntuario(IDNomePaciente);
+		Paciente paciente = pesquisaPaciente(Integer.parseInt(idPaciente));
+		procuraOrgao(orgao, paciente.getTipoSanguineo());
 		
+		double gasto = gastoComMedicamentos(nomesMedicamentos);
+		paciente.setTotalGasto(gasto + 12500);
+		
+		Prontuario prontuario = pesquisaProntuario(idPaciente);
 		prontuario.getProcedimentos().add(procedimento);
 		
 		//aqui vai o preco do transplante
 			
+	}
+	
+	/**
+	 * Procura um orgao disponivel para realizacao de um transplante.
+	 * 
+	 * @param orgao
+	 * @param tipoSanguineo
+	 * @return
+	 * @throws Exception
+	 */
+	private boolean procuraOrgao(String orgao, String tipoSanguineo) throws Exception{
+		for (Orgao o : orgaos) {
+			if(orgao.equalsIgnoreCase(o.getNome()) && tipoSanguineo.equalsIgnoreCase(o.getTipoSanguineo())){
+				return true;
+			}
+		}
+		throw new Exception("Erro na realizacao de procedimentos. Banco nao possui o orgao especificado.");
 	}
 	
 	/**
@@ -1019,7 +1062,7 @@ public class Controller {
 	 * @return
 	 * @throws Exception
 	 */
-	public boolean verificaProcedimento(String procedimento) throws Exception{
+	public boolean verificaProcedimento(String procedimento) throws Exception{ //rever
 		Procedimentos[] procedimentosExistentes = Procedimentos.values();
 		for (Procedimentos p : procedimentosExistentes) {
 			if(procedimento.trim().equalsIgnoreCase(p.name())){
@@ -1040,6 +1083,17 @@ public class Controller {
 	public int getTotalProcedimento(String id){
 		Prontuario p = pesquisaProntuario(id);
 		return p.getTotalProcedimento();
+	}
+	
+	public int getPontosFidelidade(String id) throws Exception{
+		Paciente p = pesquisaPaciente(Integer.parseInt(id));
+		return p.getCartaoFidelidade().getPontosFidelidade();
+	}
+	
+	public double getGastosPaciente(String id) throws Exception{
+		Paciente p = pesquisaPaciente(Integer.parseInt(id));
+		return p.getTotalGasto();
+		
 	}
 	
 }

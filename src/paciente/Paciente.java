@@ -4,6 +4,8 @@ import hospital.Pessoa;
 
 import java.time.LocalDate;
 
+import cartao.CartaoFidelidade;
+
 public class Paciente extends Pessoa{
 	
 	private double peso;
@@ -12,6 +14,8 @@ public class Paciente extends Pessoa{
 	private String genero;
 	private int idade;
 	private int id;
+	private double totalGasto;
+	private CartaoFidelidade cartaoFidelidade;
 	
 	public Paciente(String nome, LocalDate dataNascimento, double peso, String sexo, String genero, String tipoSanguineo) {
 		super(nome, dataNascimento);
@@ -20,6 +24,7 @@ public class Paciente extends Pessoa{
 		this.tipoSanguineo = tipoSanguineo;
 		this.sexoBiologico = sexo;
 		this.genero = genero;
+		this.cartaoFidelidade = new CartaoFidelidade();
 	}
 
 	@Override
@@ -72,6 +77,18 @@ public class Paciente extends Pessoa{
 
 	public void setIdade(int idade) {
 		this.idade = idade;
+	}
+
+	public CartaoFidelidade getCartaoFidelidade() {
+		return cartaoFidelidade;
+	}
+
+	public double getTotalGasto() {
+		return totalGasto;
+	}
+
+	public void setTotalGasto(double totalGasto) {
+		this.totalGasto = totalGasto;
 	}
 	
 	
